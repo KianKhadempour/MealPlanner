@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+meal-planner = {file = ".", editable = true}
+
+[dev-packages]
+nox = "2024.4.15"
+pyright = "1.1.364"
+pytest = "8.2.1"
+pytest-cov = "5.0.0"
+ruff = "0.4.5"
+
+[requires]
+python_version = "3.12"
