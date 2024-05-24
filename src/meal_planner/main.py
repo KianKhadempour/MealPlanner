@@ -1,6 +1,6 @@
 from collections.abc import Collection
 
-from lib import Component, Recipe, Tag
+from meal_planner.lib import Component, Recipe, Tag
 
 
 def get_matching_recipes(

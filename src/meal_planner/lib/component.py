@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from ingredient import Ingredient
-from unit import Unit
+from meal_planner.lib.ingredient import Ingredient
+from meal_planner.lib.unit import Unit
 
 
 @dataclass(frozen=True, slots=True)

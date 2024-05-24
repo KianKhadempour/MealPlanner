@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from component import Component
+from meal_planner.lib.component import Component
 
 
 @dataclass(frozen=True, slots=True)

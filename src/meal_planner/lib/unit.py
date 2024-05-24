@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from unit_system import UnitSystem
+from meal_planner.lib.unit_system import UnitSystem
 
 
 @dataclass(frozen=True, slots=True)
