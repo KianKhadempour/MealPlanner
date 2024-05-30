@@ -5,9 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "meal_planner"
 version = "0.0.1"
-authors = [
-    {name="Kian Khadempour"}
-]
+authors = [{ name = "Kian Khadempour" }]
 description = "Automatically plans meals, generates shopping lists, and adapts to your tastes."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -20,17 +18,23 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
-    "Typing :: Typed"
+    "Typing :: Typed",
 ]
-license = {file = "LICENSE"}
-dependencies = []
+license = { file = "LICENSE" }
+dependencies = ["SQLAlchemy>=2.0.30"]
 
 [project.urls]
 Repository = "https://github.com/KianKhadempour/MealPlanner.git"
 Issues = "https://github.com/KianKhadempour/MealPlanner/issues"
 
 [project.optional-dependencies]
-testing = ["nox>=2024.4.15", "pyright>=1.1.364", "pytest>=8.2.1", "pytest-cov>=5.0.0", "ruff>=0.4.5"]
+testing = [
+    "nox>=2024.4.15",
+    "pyright>=1.1.364",
+    "pytest>=8.2.1",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.4.5",
+]
 
 [tool.setuptools.package-data]
 

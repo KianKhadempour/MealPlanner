@@ -4,7 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-meal-planner = {file = ".", editable = true}
+tasty-api = {file = "tasty_api-0.0.1-py3-none-any.whl"}
+SQLAlchemy = ">=2.0.30"
 
 [dev-packages]
 nox = "2024.4.15"
