@@ -1,7 +1,10 @@
+import json
 from collections.abc import Collection
+from enum import StrEnum, auto
+from pprint import pprint
 
 import sqlalchemy as sa
-from tasty_api import Client
+from tasty_api.data import RecipeListData
 from tasty_api.recipe import Component, Recipe
 from tasty_api.tag import Tag
 
@@ -18,7 +21,7 @@ def get_components(recipes: Collection[Recipe]) -> list[Component]:
         for section in recipe.sections:
             for component in section.components:
                 components.append(component)
-    
+
     return components
 
 
@@ -32,7 +35,9 @@ def validation_input(type_: type, prompt: str = "") -> int:
         try:
             return type_(n)
         except ValueError:
-            print(f"Your input could not be converted to a{"n" if type_.__name__.startswith(("a", "e", "i", "o", "u")) else ""} {type_.__name__}.")
+            print(
+                f"Your input could not be converted to a{"n" if type_.__name__.startswith(("a", "e", "i", "o", "u")) else ""} {type_.__name__}."
+            )
 
 
 def get_preferred_recipes() -> list[Recipe]:
@@ -43,46 +48,86 @@ def get_preferred_tags(preferred_recipes: Collection[Recipe]) -> list[Tag]:
     preferred_tags: list[Tag] = []
     for recipe in preferred_recipes:
         preferred_tags.extend(recipe.tags)
-    
+
     return preferred_tags
 
-def store_tags(tags: Collection[Tag]) -> None:
-    engine = sa.create_engine("sqlite+pysqlite:///:memory:", echo=True)
-    
-    with engine.connect() as conn:
-        conn.execute(sa.text("CREATE TABLE tags (id int PRIMARY KEY, type varchar(255), name varchar(255), display_name varchar(255), likes int)"))
-        for tag in tags:
-            conn.execute(sa.text("""
-            INSERT INTO tags (id, type, name, display_name, likes) 
-            VALUES (:id, :type, :name, :display_name, 1)
-            ON CONFLICT(id) 
-            DO
-              UPDATE
-              SET likes = likes + 1
-        """), {
-            'id': tag.id,
-            'type': tag.type,
-            'name': tag.name,
-            'display_name': tag.display_name,
-            "likes": 1
-        })
-        
-        result = conn.execute(sa.text("SELECT * FROM tags"))
-        print(result.all())
+
+def store_tag(tag: Tag, conn: sa.Connection) -> None:
+    conn.execute(
+        sa.text("""
+        INSERT OR IGNORE INTO tags (id, likes) VALUES (:id, 0)
+    """),
+        {"id": tag.id},
+    )
+
+
+def store_tags(tags: Collection[Tag], conn: sa.Connection) -> None:
+    for tag in tags:
+        store_tag(tag, conn)
+
+
+def update_tag(tag: Tag, conn: sa.Connection, change_in_likes: int) -> None:
+    conn.execute(
+        sa.text("""
+        UPDATE tags
+        SET likes = likes + :change_in_likes
+        WHERE id = :id
+    """),
+        {"change_in_likes": change_in_likes, "id": tag.id},
+    )
+
+
+def like_tags(tags: Collection[Tag], conn: sa.Connection) -> None:
+    for tag in tags:
+        update_tag(tag, conn, 1)
+
+
+def store_recipe(recipe: Recipe, conn: sa.Connection) -> None:
+    conn.execute(
+        sa.text("INSERT OR IGNORE INTO recipes (id, name) VALUES (:id, :name)"),
+        {"id": recipe.metadata.id, "name": recipe.name},
+    )
+
+    store_tags(recipe.tags, conn)
+
+
+def store_recipe_tag_relationship(
+    recipe: Recipe, tag: Tag, conn: sa.Connection
+) -> None:
+    conn.execute(
+        sa.text(
+            "INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (:recipe_id, :tag_id)"
+        ),
+        {"recipe_id": recipe.metadata.id, "tag_id": tag.id},
+    )
+
+
+def store_recipes(recipes: Collection[Recipe], conn: sa.Connection) -> None:
+    for recipe in recipes:
+        store_recipe(recipe, conn)
+        for tag in recipe.tags:
+            store_recipe_tag_relationship(recipe, tag, conn)
+
+
+class TableType(StrEnum):
+    RECIPES = auto()
+    TAGS = auto()
+    RECIPE_TAGS = auto()
+
+
+def print_table(table_type: TableType, conn: sa.Connection) -> None:
+    pprint(conn.execute(sa.text(f"SELECT * FROM {table_type}")).all())
 
 
 def main() -> None:
-    tags = [
-        Tag(234, "country", "italian", "Italian"),
-        Tag(327, "country", "mediterranean", "Mediterranean"),
-        Tag(234, "country", "italian", "Italian"),
-        Tag(8, "ingredient", "meatballs", "Meatballs"),
-        Tag(42, "ingredient", "parsley", "Parsley"),
-        Tag(239, "ingredient", "basil", "Basil"),
-        Tag(14, "ingredient", "pepper", "Pepper"),
-    ]
-    store_tags(tags)
-    
+    engine = sa.create_engine("sqlite+pysqlite:///test.db")
+
+    with open("data/recipes-list.json", encoding="UTF-8") as f:
+        recipe_list_data = RecipeListData.from_dict(json.load(f))
+        recipes = recipe_list_data.results
+
+    with engine.begin() as conn:
+        store_recipes(recipes, conn)
 
 
 if __name__ == "__main__":
