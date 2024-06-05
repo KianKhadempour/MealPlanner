@@ -1,7 +1,7 @@
 import datetime
 import itertools
 import json
-import sys
+import os
 import threading
 import time
 from collections.abc import Collection
@@ -148,6 +148,7 @@ class FakeClient:
         :param SortingMethod sort: The method of sorting the results, defaults to SortingMethod.POPULAR
         :return list[Recipe]: The list of recipes.
         """
+        time.sleep(3)
         with open(
             self.data_folder.joinpath("recipes-list.json"), encoding="UTF-8"
         ) as f:
@@ -278,11 +279,9 @@ class Loader(AbstractContextManager):
         for c in itertools.cycle(["|", "/", "-", "\\"]):
             if self.done.is_set():
                 break
-            sys.stdout.write(f"\r{self.text} {c}")
-            sys.stdout.flush()
+            print(f"\r{self.text} {c}", end="", flush=True)
             time.sleep(0.1)
-        sys.stdout.write(f"\rDone!{"".join(" " for _ in self.text)}")
-        print()
+        print(f"\rDone!{"".join(" " for _ in self.text)}", flush=True)
 
     def __enter__(self) -> None:
         self.thread.start()
@@ -326,6 +325,9 @@ def prepare(conn: sa.Connection) -> None:
         for recipe in recipes:
             print(f"https://tasty.co/recipe/{recipe.metadata.slug}/", file=f)
     print(f"Saved recipes to recipes-{today}.txt")
+
+    os.startfile(f"shopping-list-{today}.txt")
+    os.startfile(f"recipes-{today}.txt")
 
     increment_offset(n_recipes, conn)
 
