@@ -1,3 +1,4 @@
+import datetime
 import itertools
 import json
 import sys
@@ -14,7 +15,13 @@ from tasty_api.data import Completion, CompletionData, RecipeListData
 from tasty_api.recipe import Component, Recipe
 from tasty_api.tag import Tag
 
-from meal_planner.lib.sql import Mode, get_mode, get_offset, get_tag_points
+from meal_planner.lib.sql import (
+    Mode,
+    get_mode,
+    get_offset,
+    get_tag_points,
+    increment_offset,
+)
 
 
 def get_matching_recipes(
@@ -46,9 +53,26 @@ def get_components(recipes: Collection[Recipe]) -> list[Component]:
 
 
 def make_shopping_list(components: Collection[Component]) -> str:
-    shopping_list = list[Component]
+    shopping_list: list[Component] = []
     for component in components:
-        if component in shopping_list
+        if component.id in [component_.id for component_ in shopping_list]:
+            for i, component__ in enumerate(shopping_list):
+                if component.id != component__.id:
+                    continue
+                shopping_list[i] = component + component__
+        else:
+            shopping_list.append(component)
+
+    list_items: list[str] = []
+    for component in shopping_list:
+        if component.measurements[0].quantity == 0:
+            list_items.append(component.ingredient.display_singular)
+        else:
+            list_items.append(
+                f"{component.ingredient.display_singular}: {int(component.measurements[0].quantity) if component.measurements[0].quantity.is_integer() else component.measurements[0].quantity} {component.measurements[0].unit.display_singular if component.measurements[0].quantity.is_integer() else component.measurements[0].unit.display_plural}"
+            )
+
+    return "\n".join(list_items)
 
 
 def validation_input[T](type_: Callable[[str], T], prompt: str = "") -> T:
@@ -111,7 +135,6 @@ class FakeClient:
         :param SortingMethod sort: The method of sorting the results, defaults to SortingMethod.POPULAR
         :return list[Recipe]: The list of recipes.
         """
-        time.sleep(5)
         with open(
             self.data_folder.joinpath("recipes-list.json"), encoding="UTF-8"
         ) as f:
@@ -263,8 +286,24 @@ def prepare(conn: sa.Connection) -> None:
     with Loader("Searching recipes"):
         all_recipes = client.get_recipes_list(offset=get_offset(conn), size=200)
 
-    for recipe in get_matching_recipes(all_recipes, n_recipes, get_tag_points(conn)):
-        print(recipe.name)
+    increment_offset(n_recipes, conn)
+
+    recipes = get_matching_recipes(all_recipes, n_recipes, get_tag_points(conn))
+
+    components = get_components(recipes)
+    shopping_list = make_shopping_list(components)
+    today = datetime.date.today().isoformat()
+    with open(
+        f"ingredients-{today}.txt",
+        mode="a",
+        encoding="UTF-8",
+    ) as f:
+        now = datetime.datetime.now().ctime()
+        print(now, file=f)
+        print("-" * len(now), file=f)
+        print(shopping_list, file=f, end="\n\n")
+    print(shopping_list)
+    print(f"Saved ingredients to ingredients-{today}.txt")
 
 
 def main() -> None:

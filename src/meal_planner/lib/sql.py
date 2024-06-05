@@ -112,6 +112,11 @@ def get_offset(conn: sa.Connection) -> int:
     return row.offset
 
 
+def increment_offset(n: int, conn: sa.Connection) -> None:
+    """Increments the offset by n."""
+    conn.execute(sa.text("UPDATE data SET offset = offset+:n"), {"n": n})
+
+
 def get_tag_points(conn: sa.Connection) -> dict[int, int]:
     tags = conn.execute(sa.text("SELECT * FROM tags")).all()
     tag_points: dict[int, int] = {}
