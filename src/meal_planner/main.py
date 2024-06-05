@@ -69,7 +69,21 @@ def make_shopping_list(components: Collection[Component]) -> str:
             list_items.append(component.ingredient.display_singular)
         else:
             list_items.append(
-                f"{component.ingredient.display_singular}: {int(component.measurements[0].quantity) if component.measurements[0].quantity.is_integer() else component.measurements[0].quantity} {component.measurements[0].unit.display_singular if component.measurements[0].quantity.is_integer() else component.measurements[0].unit.display_plural}"
+                "".join(
+                    (
+                        component.ingredient.display_singular,
+                        ": ",
+                        str(
+                            int(component.measurements[0].quantity)
+                            if component.measurements[0].quantity.is_integer()
+                            else component.measurements[0].quantity
+                        ),
+                        " ",
+                        component.measurements[0].unit.display_singular
+                        if component.measurements[0].quantity.is_integer()
+                        else component.measurements[0].unit.display_plural,
+                    )
+                )
             )
 
     return "\n".join(list_items)
@@ -81,9 +95,10 @@ def validation_input[T](type_: Callable[[str], T], prompt: str = "") -> T:
         try:
             return type_(n)
         except ValueError:
-            print(
-                f"Your input could not be converted to a{"n" if type_.__name__.startswith(("a", "e", "i", "o", "u")) else ""} {type_.__name__}."
+            extra_n = (
+                "n" if type_.__name__.startswith(("a", "e", "i", "o", "u")) else ""
             )
+            print(f"Your input could not be converted to a{extra_n} {type_.__name__}.")
 
 
 def get_preferred_recipes() -> list[Recipe]:
