@@ -1,2 +1,5 @@
 *.egg-info
 .coverage
+**/__pycache__/
+shopping-list-*.txt
+recipes-*.txt

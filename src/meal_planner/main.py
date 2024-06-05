@@ -76,12 +76,10 @@ def make_shopping_list(components: Collection[Component]) -> str:
                         str(
                             int(component.measurements[0].quantity)
                             if component.measurements[0].quantity.is_integer()
-                            else component.measurements[0].quantity
+                            else round(component.measurements[0].quantity, 2)
                         ),
                         " ",
-                        component.measurements[0].unit.display_singular
-                        if component.measurements[0].quantity.is_integer()
-                        else component.measurements[0].unit.display_plural,
+                        component.measurements[0].unit.abbreviation,
                     )
                 )
             )
@@ -301,24 +299,35 @@ def prepare(conn: sa.Connection) -> None:
     with Loader("Searching recipes"):
         all_recipes = client.get_recipes_list(offset=get_offset(conn), size=200)
 
-    increment_offset(n_recipes, conn)
-
     recipes = get_matching_recipes(all_recipes, n_recipes, get_tag_points(conn))
 
     components = get_components(recipes)
     shopping_list = make_shopping_list(components)
     today = datetime.date.today().isoformat()
+    now = datetime.datetime.now().strftime("%H:%M:%S")
+
     with open(
-        f"ingredients-{today}.txt",
+        f"shopping-list-{today}.txt",
         mode="a",
         encoding="UTF-8",
     ) as f:
-        now = datetime.datetime.now().ctime()
         print(now, file=f)
         print("-" * len(now), file=f)
         print(shopping_list, file=f, end="\n\n")
-    print(shopping_list)
-    print(f"Saved ingredients to ingredients-{today}.txt")
+    print(f"Saved shopping list to shopping-list-{today}.txt")
+
+    with open(
+        f"recipes-{today}.txt",
+        mode="a",
+        encoding="UTF-8",
+    ) as f:
+        print(now, file=f)
+        print("-" * len(now), file=f)
+        for recipe in recipes:
+            print(f"https://tasty.co/recipe/{recipe.metadata.slug}/", file=f)
+    print(f"Saved recipes to recipes-{today}.txt")
+
+    increment_offset(n_recipes, conn)
 
 
 def main() -> None:
