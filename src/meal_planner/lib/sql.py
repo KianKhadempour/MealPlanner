@@ -1,12 +1,19 @@
 from __future__ import annotations
 
-from collections.abc import Collection
+from collections.abc import Iterable
 from enum import Enum, StrEnum, auto
 from pprint import pprint
+from typing import NamedTuple
 
 import sqlalchemy as sa
 from tasty_api.recipe import Recipe
 from tasty_api.tag import Tag
+
+
+class NoDataFoundError(Exception):
+    """Exception raised when no data is found in the database."""
+
+    pass
 
 
 def store_tag(tag: Tag, conn: sa.Connection) -> None:
@@ -18,7 +25,7 @@ def store_tag(tag: Tag, conn: sa.Connection) -> None:
     )
 
 
-def store_tags(tags: Collection[Tag], conn: sa.Connection) -> None:
+def store_tags(tags: Iterable[Tag], conn: sa.Connection) -> None:
     for tag in tags:
         store_tag(tag, conn)
 
@@ -34,7 +41,7 @@ def update_tag(tag: Tag, conn: sa.Connection, change_in_likes: int) -> None:
     )
 
 
-def like_tags(tags: Collection[Tag], conn: sa.Connection) -> None:
+def like_tags(tags: Iterable[Tag], conn: sa.Connection) -> None:
     for tag in tags:
         update_tag(tag, conn, 1)
 
@@ -46,6 +53,8 @@ def store_recipe(recipe: Recipe, conn: sa.Connection) -> None:
     )
 
     store_tags(recipe.tags, conn)
+    for tag in recipe.tags:
+        store_recipe_tag_relationship(recipe.metadata.id, tag.id, conn)
 
 
 def store_recipe_tag_relationship(
@@ -59,11 +68,43 @@ def store_recipe_tag_relationship(
     )
 
 
-def store_recipes(recipes: Collection[Recipe], conn: sa.Connection) -> None:
+def store_recipes(recipes: Iterable[Recipe], conn: sa.Connection) -> None:
     for recipe in recipes:
         store_recipe(recipe, conn)
-        for tag in recipe.tags:
-            store_recipe_tag_relationship(recipe, tag, conn)
+
+
+def store_previous_recipe(recipe: Recipe, conn: sa.Connection) -> None:
+    conn.execute(
+        sa.text("INSERT INTO previous_recipes (recipe_id) VALUES (:recipe_id)"),
+        {"recipe_id": recipe.metadata.id},
+    )
+
+
+def store_previous_recipes(recipes: Iterable[Recipe], conn: sa.Connection) -> None:
+    for recipe in recipes:
+        store_previous_recipe(recipe, conn)
+
+
+class SimpleRecipe(NamedTuple):
+    id: int
+    name: str
+
+
+def get_previous_recipes(conn: sa.Connection) -> list[SimpleRecipe]:
+    table = conn.execute(
+        sa.text(
+            "SELECT recipes.id, recipes.name FROM recipes INNER JOIN previous_recipes ON recipes.id = previous_recipes.recipe_id"
+        )
+    ).all()
+
+    if not table:
+        raise NoDataFoundError()
+
+    return [SimpleRecipe(row.id, row.name) for row in table]
+
+
+def delete_previous_recipes(conn: sa.Connection) -> None:
+    conn.execute(sa.text("DELETE FROM previous_recipes"))
 
 
 class TableType(StrEnum):
@@ -88,12 +129,6 @@ class Mode(Enum):
         return cls.REVIEW
 
 
-class NoDataFoundError(Exception):
-    """Exception raised when no data is found in the database."""
-
-    pass
-
-
 def get_mode(conn: sa.Connection) -> Mode:
     row = conn.execute(sa.text("SELECT mode FROM data")).first()
 
@@ -101,6 +136,10 @@ def get_mode(conn: sa.Connection) -> Mode:
         raise NoDataFoundError()
 
     return Mode.from_int(row.mode)
+
+
+def set_mode(mode: Mode, conn: sa.Connection) -> None:
+    conn.execute(sa.text("UPDATE data SET mode = :mode"), {"mode": mode.value})
 
 
 def get_offset(conn: sa.Connection) -> int:
