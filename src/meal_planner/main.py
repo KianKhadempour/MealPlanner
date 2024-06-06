@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import itertools
 import json
@@ -6,6 +8,7 @@ import threading
 import time
 from collections.abc import Collection
 from contextlib import AbstractContextManager
+from enum import Enum
 from pathlib import Path
 from typing import Callable
 
@@ -17,13 +20,17 @@ from tasty_api.tag import Tag
 
 from meal_planner.lib.sql import (
     Mode,
+    delete_previous_recipes,
     get_mode,
     get_offset,
+    get_previous_recipes,
+    get_recipe_tags,
     get_tag_points,
     increment_offset,
     set_mode,
     store_previous_recipes,
     store_recipes,
+    update_tag,
 )
 
 
@@ -347,6 +354,44 @@ def prepare(conn: sa.Connection) -> None:
     set_mode(Mode.REVIEW, conn)
 
 
+class Rating(Enum):
+    DISLIKE = -1
+    NONE = 0
+    LIKE = 1
+    LOVE = 2
+
+    @classmethod
+    def from_str(cls, input_: str) -> Rating:
+        match input_.lower():
+            case "dislike":
+                return Rating.DISLIKE
+            case "none":
+                return Rating.NONE
+            case "like":
+                return Rating.LIKE
+            case "love":
+                return Rating.LOVE
+            case _:
+                raise ValueError(
+                    "from_str must be called with either dislike, none, like, or love."
+                )
+
+
+def review(conn: sa.Connection) -> None:
+    for recipe_id, recipe_name in get_previous_recipes(conn):
+        rating = validation_input(
+            Rating.from_str,
+            f"How did you like {recipe_name} (dislike, none, like, or love)? ",
+            "Please enter dislike, none, like, or love",
+        )
+
+        for tag_id in get_recipe_tags(recipe_id, conn):
+            update_tag(tag_id, conn, rating.value)
+
+    delete_previous_recipes(conn)
+    set_mode(Mode.PREPARE, conn)
+
+
 def main() -> None:
     engine = sa.create_engine("sqlite+pysqlite:///test.db")
 
@@ -355,8 +400,8 @@ def main() -> None:
 
         if mode == Mode.PREPARE:
             prepare(conn)
-        # else:
-        #     review(conn)
+        else:
+            review(conn)
 
 
 if __name__ == "__main__":
