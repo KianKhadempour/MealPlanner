@@ -21,6 +21,9 @@ from meal_planner.lib.sql import (
     get_offset,
     get_tag_points,
     increment_offset,
+    set_mode,
+    store_previous_recipes,
+    store_recipes,
 )
 
 
@@ -331,12 +334,17 @@ def prepare(conn: sa.Connection) -> None:
         print("-" * len(now), file=f)
         for recipe in recipes:
             print(f"https://tasty.co/recipe/{recipe.metadata.slug}/", file=f)
+
     print(f"Saved recipes to recipes-{today}.txt")
 
     os.startfile(f"shopping-list-{today}.txt")
     os.startfile(f"recipes-{today}.txt")
 
+    store_recipes(recipes, conn)
+    store_previous_recipes(recipes, conn)
+
     increment_offset(n_recipes, conn)
+    set_mode(Mode.REVIEW, conn)
 
 
 def main() -> None:
