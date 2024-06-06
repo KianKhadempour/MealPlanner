@@ -18,9 +18,7 @@ class NoDataFoundError(Exception):
 
 def store_tag(tag: Tag, conn: sa.Connection) -> None:
     conn.execute(
-        sa.text("""
-        INSERT OR IGNORE INTO tags (id, likes) VALUES (:id, 0)
-    """),
+        sa.text("INSERT OR IGNORE INTO tags (id, likes) VALUES (:id, 0)"),
         {"id": tag.id},
     )
 
