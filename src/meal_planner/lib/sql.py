@@ -28,20 +28,20 @@ def store_tags(tags: Iterable[Tag], conn: sa.Connection) -> None:
         store_tag(tag, conn)
 
 
-def update_tag(tag: Tag, conn: sa.Connection, change_in_likes: int) -> None:
+def update_tag(tag_id: int, conn: sa.Connection, change_in_likes: int) -> None:
     conn.execute(
         sa.text("""
         UPDATE tags
         SET likes = likes + :change_in_likes
         WHERE id = :id
     """),
-        {"change_in_likes": change_in_likes, "id": tag.id},
+        {"change_in_likes": change_in_likes, "id": tag_id},
     )
 
 
 def like_tags(tags: Iterable[Tag], conn: sa.Connection) -> None:
     for tag in tags:
-        update_tag(tag, conn, 1)
+        update_tag(tag.id, conn, 1)
 
 
 def store_recipe(recipe: Recipe, conn: sa.Connection) -> None:
@@ -56,14 +56,23 @@ def store_recipe(recipe: Recipe, conn: sa.Connection) -> None:
 
 
 def store_recipe_tag_relationship(
-    recipe: Recipe, tag: Tag, conn: sa.Connection
+    recipe_id: int, tag_id: int, conn: sa.Connection
 ) -> None:
     conn.execute(
         sa.text(
             "INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (:recipe_id, :tag_id)"
         ),
-        {"recipe_id": recipe.metadata.id, "tag_id": tag.id},
+        {"recipe_id": recipe_id, "tag_id": tag_id},
     )
+
+
+def get_recipe_tags(recipe_id: int, conn: sa.Connection) -> list[int]:
+    tag_ids = conn.execute(
+        sa.text("SELECT tag_id FROM recipe_tags WHERE recipe_id = :recipe_id"),
+        {"recipe_id": recipe_id},
+    ).all()
+
+    return [row.tag_id for row in tag_ids]
 
 
 def store_recipes(recipes: Iterable[Recipe], conn: sa.Connection) -> None:
