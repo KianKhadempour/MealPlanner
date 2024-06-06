@@ -33,7 +33,12 @@ load_dotenv()
 
 
 def prepare(conn: sa.Connection) -> None:
-    client = FakeClient()
+    key = os.environ.get("TASTY_API_KEY")
+    if key is None:
+        print("Please enter your Tasty api key and try again.", file=sys.stderr)
+        exit(1)
+
+    client = Client(key)
 
     n_recipes = validation_input(int, "How many recipes do you want? ")
     with Loader("Searching recipes"):
@@ -96,7 +101,7 @@ def review(conn: sa.Connection) -> None:
 def main() -> None:
     engine = sa.create_engine("sqlite+pysqlite:///test.db")
 
-    with engine.connect() as conn:
+    with engine.begin() as conn:
         mode = get_mode(conn)
 
         if mode == Mode.PREPARE:

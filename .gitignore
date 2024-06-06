@@ -3,3 +3,4 @@
 **/__pycache__/
 shopping-list-*.txt
 recipes-*.txt
+.env
