@@ -87,16 +87,23 @@ def make_shopping_list(components: Collection[Component]) -> str:
     return "\n".join(list_items)
 
 
-def validation_input[T](type_: Callable[[str], T], prompt: str = "") -> T:
+def validation_input[T](
+    type_: Callable[[str], T], prompt: str = "", message_on_fail: str | None = None
+) -> T:
     while True:
         n = input(prompt)
         try:
             return type_(n)
-        except ValueError:
-            extra_n = (
-                "n" if type_.__name__.startswith(("a", "e", "i", "o", "u")) else ""
-            )
-            print(f"Your input could not be converted to a{extra_n} {type_.__name__}.")
+        except (ValueError, TypeError):
+            if message_on_fail is None:
+                extra_n = (
+                    "n" if type_.__name__.startswith(("a", "e", "i", "o", "u")) else ""
+                )
+                print(
+                    f"Your input could not be converted to a{extra_n} {type_.__name__}."
+                )
+            else:
+                print(message_on_fail)
 
 
 def get_preferred_recipes() -> list[Recipe]:
@@ -269,7 +276,7 @@ class FakeClient:
     #     return data.results
 
 
-class Loader(AbstractContextManager):
+class Loader(AbstractContextManager[None]):
     def __init__(self, text: str) -> None:
         self.text = text
         self.done = threading.Event()
