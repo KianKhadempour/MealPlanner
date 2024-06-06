@@ -11,8 +11,8 @@ from typing import Callable
 
 import sqlalchemy as sa
 from tasty_api import SortingMethod
-from tasty_api.data import Completion, CompletionData, RecipeListData
-from tasty_api.recipe import Component, Recipe
+from tasty_api.data import CompletionData, RecipeListData
+from tasty_api.recipe import Completion, Component, Recipe
 from tasty_api.tag import Tag
 
 from meal_planner.lib.sql import (
