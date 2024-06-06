@@ -6,6 +6,10 @@ CREATE TABLE `recipes`(
     `id`   INT UNSIGNED NOT NULL PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL
 );
+CREATE TABLE `previous_recipes`(
+    `recipe_id`              INT UNSIGNED NOT NULL,
+    FOREIGN KEY(`recipe_id`) REFERENCES recipes(`id`)
+)
 CREATE TABLE `recipe_tags`(
     `recipe_id`              INT UNSIGNED NOT NULL,
     `tag_id`                 INT UNSIGNED NOT NULL,
