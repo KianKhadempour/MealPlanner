@@ -126,8 +126,8 @@ def print_table(table_type: TableType, conn: sa.Connection) -> None:
 
 
 class Mode(Enum):
-    PREPARE = auto()
-    REVIEW = auto()
+    PREPARE = 0
+    REVIEW = 1
 
     @classmethod
     def from_int(cls, i: int) -> Mode:
