@@ -81,6 +81,16 @@ def store_recipes(recipes: Iterable[Recipe], conn: sa.Connection) -> None:
         store_recipe(recipe, conn)
 
 
+def recipe_exists(recipe: Recipe, conn: sa.Connection) -> bool:
+    recipes = conn.execute(sa.text("SELECT * FROM recipes")).all()
+
+    for recipe_ in recipes:
+        if recipe.metadata.id == recipe_.id:
+            return False
+
+    return True
+
+
 def store_previous_recipe(recipe: Recipe, conn: sa.Connection) -> None:
     conn.execute(
         sa.text("INSERT INTO previous_recipes (recipe_id) VALUES (:recipe_id)"),

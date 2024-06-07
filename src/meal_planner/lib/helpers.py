@@ -10,10 +10,19 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+import sqlalchemy as sa
 from rapid_tasty_api import SortingMethod
 from rapid_tasty_api.data import CompletionData, RecipeListData
 from rapid_tasty_api.recipe import Completion, Component, Recipe
 from rapid_tasty_api.tag import Tag
+
+from meal_planner.lib.sql import recipe_exists
+
+
+def remove_duplicate_recipes(
+    recipes: list[Recipe], conn: sa.Connection
+) -> list[Recipe]:
+    return [recipe for recipe in recipes if not recipe_exists(recipe, conn)]
 
 
 def get_matching_recipes(

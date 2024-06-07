@@ -12,6 +12,7 @@ from meal_planner.lib.helpers import (
     get_components,
     get_matching_recipes,
     make_shopping_list,
+    remove_duplicate_recipes,
     validation_input,
 )
 from meal_planner.lib.sql import (
@@ -38,7 +39,7 @@ def prepare(conn: sa.Connection) -> int | None:
     key = os.environ.get("TASTY_API_KEY")
     if key is None:
         print(
-            "Please set the TASTY_API_KEY environment variable to your Tasty Api Key and try again.",
+            "Please set the TASTY_API_KEY environment variable to your Tasty API key and try again.",
             file=sys.stderr,
         )
         return 1
@@ -47,7 +48,9 @@ def prepare(conn: sa.Connection) -> int | None:
 
     n_recipes = validation_input(int, "How many recipes do you want? ")
     with Loader("Searching recipes"):
-        all_recipes = client.get_recipes_list(offset=get_offset(conn), size=200)
+        all_recipes = remove_duplicate_recipes(
+            client.get_recipes_list(offset=get_offset(conn), size=200), conn
+        )
 
     recipes = get_matching_recipes(all_recipes, n_recipes, get_tag_points(conn))
 
