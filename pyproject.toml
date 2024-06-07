@@ -1,17 +1,17 @@
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "meal_planner"
-version = "0.0.1"
+dynamic = ["version"]
 authors = [{ name = "Kian Khadempour" }]
 description = "Automatically plans meals, generates shopping lists, and adapts to your tastes."
 readme = "README.md"
 requires-python = ">=3.12"
 classifiers = [
     "Private :: Do Not Upload",
-    "Development Status :: 1 - Planning",
+    "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
@@ -21,7 +21,11 @@ classifiers = [
     "Typing :: Typed",
 ]
 license = { file = "LICENSE" }
-dependencies = ["SQLAlchemy>=2.0.30"]
+dependencies = [
+    "SQLAlchemy>=2.0.30",
+    "python-dotenv>=1.0.1",
+    "rapid_tasty_api>=0.1.2",
+]
 
 [project.urls]
 Repository = "https://github.com/KianKhadempour/MealPlanner.git"
@@ -41,3 +45,9 @@ testing = [
 [tool.ruff.lint]
 # Disable fix for unused imports (`F401`).
 unfixable = ["F401"]
+
+[tool.hatch.version]
+path = "src/meal_planner/__about__.py"
+
+[project.scripts]
+meal_planner = "meal_planner.__main__:main"

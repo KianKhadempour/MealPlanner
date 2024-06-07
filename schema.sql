@@ -9,7 +9,7 @@ CREATE TABLE `recipes`(
 CREATE TABLE `previous_recipes`(
     `recipe_id`              INT UNSIGNED NOT NULL,
     FOREIGN KEY(`recipe_id`) REFERENCES recipes(`id`)
-)
+);
 CREATE TABLE `recipe_tags`(
     `recipe_id`              INT UNSIGNED NOT NULL,
     `tag_id`                 INT UNSIGNED NOT NULL,

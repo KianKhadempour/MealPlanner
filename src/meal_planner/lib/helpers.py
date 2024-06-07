@@ -10,10 +10,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from tasty_api import SortingMethod
-from tasty_api.data import CompletionData, RecipeListData
-from tasty_api.recipe import Completion, Component, Recipe
-from tasty_api.tag import Tag
+from rapid_tasty_api import SortingMethod
+from rapid_tasty_api.data import CompletionData, RecipeListData
+from rapid_tasty_api.recipe import Completion, Component, Recipe
+from rapid_tasty_api.tag import Tag
 
 
 def get_matching_recipes(
@@ -23,8 +23,8 @@ def get_matching_recipes(
 
     for recipe in recipes:
         recipe_score = 0
-        for tag in recipes:
-            if tag_score := tag_points.get(tag.metadata.id):
+        for tag in recipe.tags:
+            if tag_score := tag_points.get(tag.id):
                 recipe_score += tag_score
 
         scores.append((recipe, recipe_score))
@@ -46,20 +46,23 @@ def get_components(recipes: Iterable[Recipe]) -> list[Component]:
 
 def make_shopping_list(components: Iterable[Component]) -> str:
     shopping_list: list[Component] = []
+    ingredient_id_list: list[int] = []
     for component in components:
-        if component.ingredient.id in [
-            component_.ingredient.id for component_ in shopping_list
-        ]:
+        if component.ingredient.id in ingredient_id_list:
             for i, component__ in enumerate(shopping_list):
                 if component.ingredient.id != component__.ingredient.id:
                     continue
-                shopping_list[i] = component + component__
+                shopping_list[i] = component__.__add__(component)
+                break
         else:
             shopping_list.append(component)
+            ingredient_id_list.append(component.ingredient.id)
 
     list_items: list[str] = []
     for component in shopping_list:
-        if component.measurements[0].quantity == 0:
+        if not len(component.measurements) or all(
+            measurement.quantity == 0 for measurement in component.measurements
+        ):
             list_items.append(component.ingredient.display_singular)
         else:
             list_items.append(

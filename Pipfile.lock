@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c8b18a804c9baa3797b9ec299dfdfb96b5c95ecf6e55cb678661a5e09ae5af35"
+            "sha256": "e74d14aabbaa4de952d3ef79944e75b7d5de395d9e0050f5adb95641a33ba883"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -217,6 +217,15 @@
             "markers": "python_version >= '3.8'",
             "version": "==2024.4.27"
         },
+        "rapid-tasty-api": {
+            "hashes": [
+                "sha256:5007e3f97c37f29d1883800b400bc1a65ba2dbc33cca353a5204176a89c6be25",
+                "sha256:f95ca6345d161138229c8d5bcef5f5a81dbd43adf7f068cf07d258533401de70"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.11'",
+            "version": "==0.1.2"
+        },
         "requests": {
             "hashes": [
                 "sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760",
@@ -281,19 +290,13 @@
             "markers": "python_version >= '3.7'",
             "version": "==2.0.30"
         },
-        "tasty-api": {
-            "file": "tasty_api-0.1.1-py3-none-any.whl",
-            "hashes": [
-                "sha256:dbf951187508e4729a7f6eb006b8288cef977e3f8de8f2cbe2d8cc0b57c2ffdd"
-            ]
-        },
         "typing-extensions": {
             "hashes": [
-                "sha256:6024b58b69089e5a89c347397254e35f1bf02a907728ec7fee9bf0fe837d203a",
-                "sha256:915f5e35ff76f56588223f15fdd5938f9a1cf9195c0de25130c627e4d597f6d1"
+                "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
+                "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==4.12.1"
+            "version": "==4.12.2"
         },
         "urllib3": {
             "hashes": [

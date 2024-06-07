@@ -6,8 +6,9 @@ from pprint import pprint
 from typing import NamedTuple
 
 import sqlalchemy as sa
-from tasty_api.recipe import Recipe
-from tasty_api.tag import Tag
+from rapid_tasty_api.recipe import Recipe
+from rapid_tasty_api.tag import Tag
+from sqlalchemy.exc import OperationalError
 
 
 class NoDataFoundError(Exception):
@@ -170,3 +171,53 @@ def get_tag_points(conn: sa.Connection) -> dict[int, int]:
         tag_points.update({tag.id: tag.likes})
 
     return tag_points
+
+
+def db_exists(conn: sa.Connection) -> bool:
+    try:
+        conn.execute(sa.text("SELECT * FROM data"))
+    except OperationalError:
+        return False
+
+    return True
+
+
+def create_db() -> None:
+    engine = sa.create_engine("sqlite+pysqlite:///database.db")
+
+    with engine.begin() as conn:
+        conn.execute(
+            sa.text("""CREATE TABLE `tags`(
+                        `id`    INT UNSIGNED NOT NULL PRIMARY KEY,
+                        `likes` INT NOT NULL
+                    )""")
+        )
+        conn.execute(
+            sa.text("""CREATE TABLE `recipes`(
+                        `id`   INT UNSIGNED NOT NULL PRIMARY KEY,
+                        `name` VARCHAR(255) NOT NULL
+                    )""")
+        )
+        conn.execute(
+            sa.text("""CREATE TABLE `previous_recipes`(
+                        `recipe_id`              INT UNSIGNED NOT NULL,
+                        FOREIGN KEY(`recipe_id`) REFERENCES recipes(`id`)
+                    )""")
+        )
+        conn.execute(
+            sa.text("""CREATE TABLE `recipe_tags`(
+                        `recipe_id`              INT UNSIGNED NOT NULL,
+                        `tag_id`                 INT UNSIGNED NOT NULL,
+                        FOREIGN KEY(`recipe_id`) REFERENCES recipes(`id`),
+                        FOREIGN KEY(`tag_id`)    REFERENCES tags(`id`)
+                    )""")
+        )
+        conn.execute(
+            sa.text("""CREATE TABLE `data`(
+                        `mode`   INT UNSIGNED NOT NULL DEFAULT 0,
+                        `offset` INT UNSIGNED NOT NULL DEFAULT 0
+                    )""")
+        )
+        conn.execute(
+            sa.text("INSERT INTO data VALUES(:mode, :offset)"), {"mode": 0, "offset": 0}
+        )

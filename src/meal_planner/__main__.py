@@ -4,7 +4,7 @@ import sys
 
 import sqlalchemy as sa
 from dotenv import load_dotenv
-from tasty_api import Client
+from rapid_tasty_api import Client
 
 from meal_planner.lib.helpers import (
     Loader,
@@ -16,6 +16,8 @@ from meal_planner.lib.helpers import (
 )
 from meal_planner.lib.sql import (
     Mode,
+    create_db,
+    db_exists,
     delete_previous_recipes,
     get_mode,
     get_offset,
@@ -32,11 +34,14 @@ from meal_planner.lib.sql import (
 load_dotenv()
 
 
-def prepare(conn: sa.Connection) -> None:
+def prepare(conn: sa.Connection) -> int | None:
     key = os.environ.get("TASTY_API_KEY")
     if key is None:
-        print("Please enter your Tasty api key and try again.", file=sys.stderr)
-        exit(1)
+        print(
+            "Please set the TASTY_API_KEY environment variable to your Tasty Api Key and try again.",
+            file=sys.stderr,
+        )
+        return 1
 
     client = Client(key)
 
@@ -98,16 +103,19 @@ def review(conn: sa.Connection) -> None:
     set_mode(Mode.PREPARE, conn)
 
 
-def main() -> None:
-    engine = sa.create_engine("sqlite+pysqlite:///test.db")
+def main() -> int | None:
+    engine = sa.create_engine("sqlite+pysqlite:///database.db")
 
     with engine.begin() as conn:
+        if not db_exists(conn):
+            create_db()
+
         mode = get_mode(conn)
 
         if mode == Mode.PREPARE:
-            prepare(conn)
+            return prepare(conn)
         else:
-            review(conn)
+            return review(conn)
 
 
 if __name__ == "__main__":
